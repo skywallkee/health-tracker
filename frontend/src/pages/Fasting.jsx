@@ -1,86 +1,111 @@
 import { useState, useEffect } from 'react';
 
+const presets = [
+  { label: '16:8', hours: 16 },
+  { label: '18:6', hours: 18 },
+  { label: '20:4', hours: 20 },
+];
+
 export default function Fasting() {
-  const [start, setStart] = useState(null);
-  const [end, setEnd] = useState(null);
-  const [elapsed, setElapsed] = useState(0);
+  const [selected, setSelected] = useState(presets[0].hours);
+  const [session, setSession] = useState(null);
+  const [lastFast, setLastFast] = useState(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    const storedStart = localStorage.getItem('fastStart');
-    const storedEnd = localStorage.getItem('fastEnd');
-    if (storedStart) setStart(new Date(storedStart));
-    if (storedEnd) setEnd(new Date(storedEnd));
+    const stored = localStorage.getItem('fastingSession');
+    if (stored) {
+      setSession(JSON.parse(stored));
+    }
+    const last = localStorage.getItem('lastFast');
+    if (last) {
+      setLastFast(JSON.parse(last));
+    }
   }, []);
 
   useEffect(() => {
-    let timer;
-    if (start && (!end || end < start)) {
-      timer = setInterval(() => {
-        setElapsed(Date.now() - start.getTime());
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [start, end]);
+    if (!session) return;
+    const id = setInterval(() => forceUpdate(v => v + 1), 1000);
+    return () => clearInterval(id);
+  }, [session]);
 
-  function startFast() {
-    const now = new Date();
-    localStorage.setItem('fastStart', now.toISOString());
-    localStorage.removeItem('fastEnd');
-    setStart(now);
-    setEnd(null);
-  }
+  const startFast = () => {
+    const data = { start: Date.now(), hours: selected };
+    localStorage.setItem('fastingSession', JSON.stringify(data));
+    setSession(data);
+  };
 
-  function stopFast() {
-    const now = new Date();
-    localStorage.setItem('fastEnd', now.toISOString());
-    setEnd(now);
-  }
+  const stopFast = () => {
+    const end = Date.now();
+    const data = { start: session.start, end, hours: session.hours };
+    localStorage.setItem('lastFast', JSON.stringify(data));
+    localStorage.removeItem('fastingSession');
+    setLastFast(data);
+    setSession(null);
+  };
 
-  const isActive = start && (!end || end < start);
+  const formatDuration = ms => {
+    const total = Math.floor(ms / 1000);
+    const hrs = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins
+      .toString()
+      .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   let content;
-  if (isActive) {
-    const hours = Math.floor(elapsed / 3600000);
-    const minutes = Math.floor((elapsed % 3600000) / 60000);
-    const seconds = Math.floor((elapsed % 60000) / 1000);
+  if (session) {
+    const elapsed = Date.now() - session.start;
+    const remainingMs = session.hours * 3600 * 1000 - elapsed;
+    const remaining = remainingMs > 0 ? formatDuration(remainingMs) : '00:00:00';
     content = (
       <div className="space-y-2">
-        <p>Fasting since {start.toLocaleString()}</p>
-        <p>
-          Elapsed: {hours}h {minutes}m {seconds}s
-        </p>
-        <button onClick={stopFast} className="bg-red-600 text-white px-4 py-2 rounded">
+        <p>Fasting for: {formatDuration(elapsed)}</p>
+        <p>Time remaining: {remaining}</p>
+        <button
+          onClick={stopFast}
+          className="px-4 py-2 bg-red-500 text-white rounded"
+        >
           Stop Fast
-        </button>
-      </div>
-    );
-  } else if (start && end) {
-    const duration = end - start;
-    const hours = Math.floor(duration / 3600000);
-    const minutes = Math.floor((duration % 3600000) / 60000);
-    content = (
-      <div className="space-y-2">
-        <p>Last fast started at {start.toLocaleString()}</p>
-        <p>Ended at {end.toLocaleString()}</p>
-        <p>
-          Duration: {hours}h {minutes}m
-        </p>
-        <button onClick={startFast} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Start New Fast
         </button>
       </div>
     );
   } else {
     content = (
-      <button onClick={startFast} className="bg-blue-600 text-white px-4 py-2 rounded">
-        Start Fast
-      </button>
+      <div className="space-y-2">
+        <div>
+          <label className="mr-2">Preset:</label>
+          <select
+            value={selected}
+            onChange={e => setSelected(Number(e.target.value))}
+            className="border p-1 rounded"
+          >
+            {presets.map(p => (
+              <option key={p.hours} value={p.hours}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={startFast}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Start Fast
+        </button>
+        {lastFast && (
+          <div className="text-sm text-gray-700">
+            <p>Last fast: {formatDuration(lastFast.end - lastFast.start)}</p>
+          </div>
+        )}
+      </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="text-xl mb-4">Fasting</h1>
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Fasting</h1>
       {content}
     </div>
   );

@@ -17,13 +17,13 @@ Build for production with `npm run build`.
 
 ## Features
 
-- **Meals**: Log meals with name, calories and time. Meals are stored per day in LocalStorage. You can delete meals from today's list and the total calories update automatically.
-- **Fasting**: Start and stop fasting sessions. The active fast shows elapsed time. When ended, the start and end times along with total duration are saved in LocalStorage and displayed as the most recent fast.
+### Meals
+- Log meals with name, calories and time.
+- Entries are stored per day in LocalStorage and can be deleted.
+- The page shows today's meal list and total calories.
 
-
-## Meals Page
-
-Navigate to `/meals` to log what you eat. Enter the meal name, calorie count and
-the time of the meal. Each entry is stored in your browser's LocalStorage under
-today's date. You can remove a meal from the list and the total calories will
-update automatically.
+### Fasting
+- Choose a fasting preset (16:8, 18:6 or 20:4).
+- Start or stop a fasting session which is saved in LocalStorage.
+- When active, a countdown displays time remaining until the preset duration is met.
+- After stopping, the last fast duration is shown.
