@@ -63,10 +63,7 @@ export default function Meals() {
           className="border p-2 w-full rounded"
         />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded w-full">
-          Add Meal
-        </button>
       </form>
-
       <h2 className="text-lg font-semibold mb-2">Today's Meals</h2>
       <ul className="space-y-2 mb-4">
         {meals.map((meal, idx) => (
