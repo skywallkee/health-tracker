@@ -1,81 +1,105 @@
 import { useState, useEffect } from 'react';
 
 export default function Meals() {
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().split('T')[0];
   const [meals, setMeals] = useState([]);
   const [form, setForm] = useState({ name: '', calories: '', time: '' });
 
   useEffect(() => {
-    const saved = localStorage.getItem(`meals-${todayKey}`);
-    if (saved) {
-      setMeals(JSON.parse(saved));
-    }
-  }, [todayKey]);
+    const saved = JSON.parse(localStorage.getItem('meals') || '{}');
+    setMeals(saved[today] || []);
+  }, [today]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  function save(updated) {
+    const saved = JSON.parse(localStorage.getItem('meals') || '{}');
+    saved[today] = updated;
+    localStorage.setItem('meals', JSON.stringify(saved));
+  }
 
-  const handleSubmit = (e) => {
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
     if (!form.name || !form.calories || !form.time) return;
     const newMeal = {
+      id: Date.now(),
       name: form.name,
-      calories: Number(form.calories),
+      calories: parseInt(form.calories, 10),
       time: form.time,
     };
     const updated = [...meals, newMeal];
     setMeals(updated);
-    localStorage.setItem(`meals-${todayKey}`, JSON.stringify(updated));
+    save(updated);
     setForm({ name: '', calories: '', time: '' });
-  };
+  }
 
-  const totalCalories = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
+  function handleDelete(id) {
+    const updated = meals.filter((m) => m.id !== id);
+    setMeals(updated);
+    save(updated);
+  }
+
+  const total = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
 
   return (
-    <div>
-      <h1 className="text-xl font-semibold mb-4">Meals</h1>
-      <form onSubmit={handleSubmit} className="space-y-2 mb-4">
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Meals</h1>
+      <form onSubmit={handleSubmit} className="space-y-2">
         <input
-          className="w-full border rounded px-2 py-1"
-          placeholder="Name"
           name="name"
+          placeholder="Name"
           value={form.name}
           onChange={handleChange}
+          className="border p-2 w-full"
         />
         <input
-          type="number"
-          className="w-full border rounded px-2 py-1"
-          placeholder="Calories"
           name="calories"
+          type="number"
+          placeholder="Calories"
           value={form.calories}
           onChange={handleChange}
+          className="border p-2 w-full"
         />
         <input
-          type="datetime-local"
-          className="w-full border rounded px-2 py-1"
           name="time"
+          type="datetime-local"
           value={form.time}
           onChange={handleChange}
+          className="border p-2 w-full"
         />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded w-full"
-        >
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
           Add Meal
         </button>
       </form>
-      <ul className="space-y-2">
-        {meals.map((meal, idx) => (
-          <li key={idx} className="border rounded p-2">
-            <div className="font-medium">{meal.name}</div>
-            <div className="text-sm text-gray-600">
-              {meal.calories} cal at {meal.time}
-            </div>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-4 font-semibold">Total Calories: {totalCalories}</p>
+
+      <div className="space-y-2">
+        {meals.length === 0 ? (
+          <p>No meals logged today.</p>
+        ) : (
+          <ul className="space-y-2">
+            {meals.map((meal) => (
+              <li key={meal.id} className="border p-2 flex justify-between items-center">
+                <div>
+                  <p>{meal.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {meal.calories} cal at {new Date(meal.time).toLocaleTimeString()}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDelete(meal.id)}
+                  className="text-red-600 text-sm"
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="font-semibold">Total: {total} calories</p>
+      </div>
     </div>
   );
 }

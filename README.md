@@ -14,3 +14,10 @@ This repository contains a Vite React application configured with Tailwind CSS a
    ```
 
 Build for production with `npm run build`.
+
+## Meals Page
+
+Navigate to `/meals` to log what you eat. Enter the meal name, calorie count and
+the time of the meal. Each entry is stored in your browser's LocalStorage under
+today's date. You can remove a meal from the list and the total calories will
+update automatically.
