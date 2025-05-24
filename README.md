@@ -17,6 +17,13 @@ Build for production with `npm run build`.
 
 ## Features
 
+### Workouts
+
+Use the Workouts tab to log training sessions. Select a workout type, enter the
+duration and optional notes, then add any exercises performed with sets, reps
+and weight. Logged workouts are stored in LocalStorage and listed below the
+form.
+
 ### Meals
 - Log meals with name, calories and time.
 - Entries are stored per day in LocalStorage and can be deleted.
